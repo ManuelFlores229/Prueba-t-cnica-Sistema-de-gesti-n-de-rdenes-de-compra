@@ -1,0 +1,23 @@
+
+
+spring:
+  application:
+    name: gestion-de-pedidos-api
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/Gestion_de_pedidos
+    username: postgres
+    password: ${DB_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+
+  flyway:
+    enabled: true
+
+server:
+  port: ${SERVER_PORT:8080}
+
