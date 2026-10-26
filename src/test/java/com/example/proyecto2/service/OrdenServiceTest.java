@@ -107,8 +107,9 @@ class OrdenServiceTest {
         assertEquals(3, respuesta.getDetalles().get(0).getCantidad());
     }
 
+
     @Test
-    void noDebeCrearOrdenSiNoHayStockSuficiente() {
+    void debeCrearOrdenAunqueNoHayaStockSuficienteHastaConfirmarla() {
         Cliente cliente = new Cliente();
         cliente.setId(1L);
 
@@ -124,6 +125,13 @@ class OrdenServiceTest {
         when(productoRepository.findById(1L))
                 .thenReturn(java.util.Optional.of(producto));
 
+        when(ordenRepository.save(any(Orden.class)))
+                .thenAnswer(invocation -> {
+                    Orden orden = invocation.getArgument(0);
+                    orden.setId(1L);
+                    return orden;
+                });
+
         OrdenRequest request = new OrdenRequest();
         request.setClienteId(1L);
 
@@ -133,20 +141,20 @@ class OrdenServiceTest {
 
         request.setDetalles(List.of(detalle));
 
-        IllegalStateException excepcion = assertThrows(
-                IllegalStateException.class,
-                () -> ordenService.crear(request)
-        );
+        var respuesta = ordenService.crear(request);
 
-        assertEquals(
-                "Existencias insuficientes para el producto: Laptop",
-                excepcion.getMessage()
-        );
+        assertEquals(EstadoOrden.CREATED, respuesta.getEstado());
+        assertEquals(new BigDecimal("37500.00"), respuesta.getTotal());
+        assertEquals(2, producto.getStock());
+
+        verify(productoRepository, never()).save(any(Producto.class));
     }
 
 
+
+
     @Test
-    void debeRestaurarStockAlCancelarOrden() {
+    void debeCancelarUnaOrdenCreadaSinModificarStock() {
         Cliente cliente = new Cliente();
         cliente.setId(1L);
 
@@ -173,16 +181,16 @@ class OrdenServiceTest {
         when(ordenRepository.findById(1L))
                 .thenReturn(java.util.Optional.of(orden));
 
-        when(productoRepository.save(any(Producto.class)))
-                .thenAnswer(invocation -> invocation.getArgument(0));
-
         when(ordenRepository.save(any(Orden.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
 
         var respuesta = ordenService.cancelar(1L);
 
-        assertEquals(10, producto.getStock());
         assertEquals(EstadoOrden.CANCELLED, respuesta.getEstado());
+        assertEquals(7, producto.getStock());
+
+        verify(productoRepository, never()).save(any(Producto.class));
+        verify(ordenRepository).save(orden);
     }
 
 
@@ -354,6 +362,9 @@ class OrdenServiceTest {
 
         when(ordenRepository.findById(1L))
                 .thenReturn(java.util.Optional.of(orden));
+
+        when(productoRepository.findById(1L))
+                .thenReturn(java.util.Optional.of(producto));
 
         when(productoRepository.save(any(Producto.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
