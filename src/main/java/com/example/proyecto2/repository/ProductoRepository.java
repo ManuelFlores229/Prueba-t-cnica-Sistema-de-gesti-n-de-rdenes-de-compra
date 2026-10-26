@@ -4,6 +4,7 @@ import com.example.proyecto2.entidades.Producto;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import java.math.BigDecimal;
 
 import java.util.List;
 
@@ -24,5 +25,12 @@ public interface ProductoRepository extends JpaRepository<Producto, Long> {
     );
 
     // Busca productos con existencias iguales o inferiores a 5.
-    List<Producto> findByStockLessThanEqual(Integer stock);
+    List<Producto> findByStockLessThanEqual(
+            Integer stock);
+
+    Page<Producto> findByPrecioBetween(
+            BigDecimal precioMinimo,
+            BigDecimal precioMaximo,
+            Pageable pageable
+    );
 }

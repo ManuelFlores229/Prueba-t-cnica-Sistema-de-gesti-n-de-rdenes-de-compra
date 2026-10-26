@@ -67,6 +67,32 @@ public class ProductoService {
                 .findByNombreContainingIgnoreCase(nombre, pageable)
                 .map(productoMapper::toResponse);
     }
+    @Transactional(readOnly = true)
+    public Page<ProductoResponse> buscarPorRangoPrecio(
+            BigDecimal precioMinimo,
+            BigDecimal precioMaximo,
+            Pageable pageable
+    ) {
+        if (precioMinimo == null || precioMaximo == null) {
+            throw new IllegalArgumentException(
+                    "El precio mínimo y máximo son obligatorios"
+            );
+        }
+
+        if (precioMinimo.compareTo(BigDecimal.ZERO) < 0
+                || precioMaximo.compareTo(precioMinimo) < 0) {
+            throw new IllegalArgumentException(
+                    "El rango de precios no es válido"
+            );
+        }
+
+        return productoRepository.findByPrecioBetween(
+                        precioMinimo,
+                        precioMaximo,
+                        pageable
+                )
+                .map(productoMapper::toResponse);
+    }
 
     @Transactional
     public ProductoResponse actualizar(

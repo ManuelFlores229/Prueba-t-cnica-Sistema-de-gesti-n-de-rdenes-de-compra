@@ -9,6 +9,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import com.example.proyecto2.dto.orden.OrdenResponse;
+import com.example.proyecto2.service.OrdenService;
 
 @RestController
 @RequestMapping("/api/clientes")
@@ -16,8 +18,11 @@ public class ClienteController {
 
     private final ClienteService clienteService;
 
-    public ClienteController(ClienteService clienteService) {
+    private final OrdenService ordenService;
+
+    public ClienteController(ClienteService clienteService, OrdenService ordenService) {
         this.clienteService = clienteService;
+        this.ordenService = ordenService;
     }
 
     @PostMapping
@@ -61,4 +66,15 @@ public class ClienteController {
     public void desactivar(@PathVariable Long id) {
         clienteService.desactivar(id);
     }
+
+
+    @GetMapping("/{id}/ordenes")
+    public Page<OrdenResponse> listarOrdenesPorCliente(
+            @PathVariable Long id,
+            @PageableDefault(size = 10, sort = "fechaCreacion")
+            Pageable pageable
+    ) {
+        return ordenService.listarPorCliente(id, pageable);
+    }
+
 }

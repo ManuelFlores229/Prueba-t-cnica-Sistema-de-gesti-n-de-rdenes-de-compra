@@ -12,15 +12,20 @@ import com.example.proyecto2.entidades.Producto;
 import com.example.proyecto2.repository.ClienteRepository;
 import com.example.proyecto2.repository.OrdenRepository;
 import com.example.proyecto2.repository.ProductoRepository;
+import com.example.proyecto2.entidades.Estados.EstadoOrden;
 
+import org.springframework.data.web.PageableDefault;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -47,6 +52,45 @@ public class OrdenService {
         return ordenRepository.findAll(pageable)
                 .map(this::convertirRespuesta);
     }
+
+    @Transactional(readOnly = true)
+    public Page<OrdenResponse> listarPorEstado(
+            EstadoOrden estado,
+            Pageable pageable
+    ) {
+        return ordenRepository.findByEstado(estado, pageable)
+                .map(this::convertirRespuesta);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<OrdenResponse> listarPorRangoFechas(
+            LocalDateTime fechaInicio,
+            LocalDateTime fechaFin,
+            Pageable pageable
+    ) {
+        if (fechaInicio.isAfter(fechaFin)) {
+            throw new IllegalArgumentException(
+                    "La fecha de inicio no puede ser posterior a la fecha final"
+            );
+        }
+
+        return ordenRepository.findByFechaCreacionBetween(
+                        fechaInicio,
+                        fechaFin,
+                        pageable
+                )
+                .map(this::convertirRespuesta);
+    }
+
+
+
+    @Transactional(readOnly = true)
+    public Page<OrdenResponse> listarPorCliente(Long clienteId, Pageable pageable) {
+
+        return ordenRepository.findByClienteId(clienteId, pageable)
+                .map(this::convertirRespuesta);
+    }
+
     @Transactional
     public OrdenResponse crear(OrdenRequest request) {
 
@@ -223,6 +267,8 @@ public class OrdenService {
 
         return response;
     }
+
+
 
 
 }
