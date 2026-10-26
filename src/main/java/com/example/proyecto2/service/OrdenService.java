@@ -91,6 +91,7 @@ public class OrdenService {
                 .map(this::convertirRespuesta);
     }
 
+
     @Transactional
     public OrdenResponse crear(OrdenRequest request) {
 
@@ -123,41 +124,30 @@ public class OrdenService {
 
             Integer cantidad = detalleRequest.getCantidad();
 
-            // 4. Validar las existencias
-            if (producto.getStock() < cantidad) {
-                throw new IllegalStateException(
-                        "Existencias insuficientes para el producto: "
-                                + producto.getNombre()
-                );
-            }
-
-            // 5. Crear el detalle y calcular su subtotal
+            // 4. Crear el detalle y guardar el precio actual
             DetalleOrden detalle = new DetalleOrden();
             detalle.setProducto(producto);
             detalle.setCantidad(cantidad);
             detalle.setPrecioUnitario(producto.getPrecio());
             detalle.calcularSubtotal();
 
-            // 6. Asociar el detalle con la orden
+            // 5. Asociar el detalle con la orden
             orden.agregarDetalle(detalle);
 
-            // 7. Sumar el subtotal al total
+            // 6. Calcular el total de la orden
             total = total.add(detalle.getSubtotal());
-
-            // 8. Descontar las existencias
-            producto.setStock(producto.getStock() - cantidad);
-            productoRepository.save(producto);
         }
 
-        // 9. Establecer el total de la orden
+        // 7. Establecer el total
         orden.setTotal(total);
 
-        // 10. Guardar la orden y sus detalles
+        // 8. Guardar la orden y sus detalles
         Orden ordenGuardada = ordenRepository.save(orden);
 
-        // 11. Devolver la respuesta
+        // 9. Devolver la respuesta
         return convertirRespuesta(ordenGuardada);
     }
+
 
     @Transactional(readOnly = true)
     public OrdenResponse buscarPorId(Long id) {
@@ -175,6 +165,7 @@ public class OrdenService {
 //CONFIRMAR
     @Transactional
     public OrdenResponse confirmar(Long id) {
+
         Orden orden = ordenRepository.findById(id)
                 .orElseThrow(() ->
                         new IllegalArgumentException(
@@ -188,6 +179,33 @@ public class OrdenService {
             );
         }
 
+        // Comprobar y descontar las existencias de cada producto
+        for (DetalleOrden detalle : orden.getDetalles()) {
+
+            Producto producto = productoRepository
+                    .findById(detalle.getProducto().getId())
+                    .orElseThrow(() ->
+                            new IllegalArgumentException(
+                                    "No existe el producto con ID: "
+                                            + detalle.getProducto().getId()
+                            )
+                    );
+
+            if (producto.getStock() < detalle.getCantidad()) {
+                throw new IllegalStateException(
+                        "Existencias insuficientes para el producto: "
+                                + producto.getNombre()
+                );
+            }
+
+            producto.setStock(
+                    producto.getStock() - detalle.getCantidad()
+            );
+
+            productoRepository.save(producto);
+        }
+
+        // Cambiar el estado solo después de procesar los productos
         orden.setEstado(EstadoOrden.CONFIRMED);
 
         Orden ordenActualizada = ordenRepository.save(orden);
@@ -195,16 +213,17 @@ public class OrdenService {
         return convertirRespuesta(ordenActualizada);
     }
 
-    //CANCELAR
 
-
-
+//CANCELAR
     @Transactional
     public OrdenResponse cancelar(Long id) {
+
         Orden orden = ordenRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException(
-                        "No existe la orden con ID: " + id
-                ));
+                .orElseThrow(() ->
+                        new IllegalArgumentException(
+                                "No existe la orden con ID: " + id
+                        )
+                );
 
         if (orden.getEstado() == EstadoOrden.CANCELLED) {
             throw new IllegalStateException(
@@ -219,10 +238,26 @@ public class OrdenService {
             );
         }
 
-        for (DetalleOrden detalle : orden.getDetalles()) {
-            Producto producto = detalle.getProducto();
-            producto.setStock(producto.getStock() + detalle.getCantidad());
-            productoRepository.save(producto);
+        // Solo devolver existencias si la orden estaba confirmada
+        if (orden.getEstado() == EstadoOrden.CONFIRMED) {
+
+            for (DetalleOrden detalle : orden.getDetalles()) {
+
+                Producto producto = productoRepository
+                        .findById(detalle.getProducto().getId())
+                        .orElseThrow(() ->
+                                new IllegalArgumentException(
+                                        "No existe el producto con ID: "
+                                                + detalle.getProducto().getId()
+                                )
+                        );
+
+                producto.setStock(
+                        producto.getStock() + detalle.getCantidad()
+                );
+
+                productoRepository.save(producto);
+            }
         }
 
         orden.setEstado(EstadoOrden.CANCELLED);
@@ -231,6 +266,7 @@ public class OrdenService {
 
         return convertirRespuesta(ordenActualizada);
     }
+
 
 
     private OrdenResponse convertirRespuesta(Orden orden) {
