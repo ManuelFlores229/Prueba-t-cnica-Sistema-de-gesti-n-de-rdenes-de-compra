@@ -7,21 +7,18 @@ import com.example.proyecto2.dto.orden.OrdenResponse;
 import com.example.proyecto2.entidades.Cliente;
 import com.example.proyecto2.entidades.DetalleOrden;
 import com.example.proyecto2.entidades.Estados.EstadoOrden;
+import com.example.proyecto2.entidades.Estados.EstadoRegistro;
 import com.example.proyecto2.entidades.Orden;
 import com.example.proyecto2.entidades.Producto;
 import com.example.proyecto2.repository.ClienteRepository;
 import com.example.proyecto2.repository.OrdenRepository;
 import com.example.proyecto2.repository.ProductoRepository;
-import com.example.proyecto2.entidades.Estados.EstadoOrden;
 
-import org.springframework.data.web.PageableDefault;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 
 
 import java.math.BigDecimal;
@@ -102,6 +99,11 @@ public class OrdenService {
                                 "No existe el cliente indicado"
                         )
                 );
+        if (cliente.getEstado() != EstadoRegistro.ACTIVO) {
+            throw new IllegalStateException(
+                    "No se pueden crear órdenes para clientes inactivos"
+            );
+        }
 
         // 2. Crear la orden
         Orden orden = new Orden();
@@ -121,6 +123,11 @@ public class OrdenService {
                                             + detalleRequest.getProductoId()
                             )
                     );
+            if (producto.getEstado() != EstadoRegistro.ACTIVO) {
+                throw new IllegalStateException(
+                        "No se pueden agregar productos inactivos a una orden"
+                );
+            }
 
             Integer cantidad = detalleRequest.getCantidad();
 

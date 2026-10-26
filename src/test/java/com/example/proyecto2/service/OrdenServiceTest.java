@@ -15,11 +15,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-
-import com.example.proyecto2.repository.OrdenRepository;
-import com.example.proyecto2.repository.ClienteRepository;
-import com.example.proyecto2.repository.ProductoRepository;
-
 import com.example.proyecto2.dto.orden.DetalleOrdenRequest;
 import com.example.proyecto2.dto.orden.OrdenRequest;
 import com.example.proyecto2.entidades.Cliente;
@@ -29,7 +24,6 @@ import com.example.proyecto2.entidades.Producto;
 import java.math.BigDecimal;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.when;
 
 import static org.mockito.Mockito.*;
@@ -622,6 +616,75 @@ class OrdenServiceTest {
 
         verify(ordenRepository, never()).save(any(Orden.class));
         verify(productoRepository, never()).save(any(Producto.class));
+    }
+
+    @Test
+    void noDebeCrearOrdenSiElClienteEstaInactivo() {
+        Cliente cliente = new Cliente();
+        cliente.setId(1L);
+        cliente.setEstado(
+                com.example.proyecto2.entidades.Estados.EstadoRegistro.INACTIVO
+        );
+
+        when(clienteRepository.findById(1L))
+                .thenReturn(java.util.Optional.of(cliente));
+
+        OrdenRequest request = new OrdenRequest();
+        request.setClienteId(1L);
+
+        IllegalStateException excepcion = assertThrows(
+                IllegalStateException.class,
+                () -> ordenService.crear(request)
+        );
+
+        assertEquals(
+                "No se pueden crear órdenes para clientes inactivos",
+                excepcion.getMessage()
+        );
+
+        verify(ordenRepository, never()).save(any(Orden.class));
+    }
+
+    @Test
+    void noDebeCrearOrdenSiElProductoEstaInactivo() {
+        Cliente cliente = new Cliente();
+        cliente.setId(1L);
+
+        Producto producto = new Producto();
+        producto.setId(1L);
+        producto.setNombre("Laptop");
+        producto.setPrecio(new BigDecimal("12500.00"));
+        producto.setStock(10);
+        producto.setEstado(
+                com.example.proyecto2.entidades.Estados.EstadoRegistro.INACTIVO
+        );
+
+        when(clienteRepository.findById(1L))
+                .thenReturn(java.util.Optional.of(cliente));
+
+        when(productoRepository.findById(1L))
+                .thenReturn(java.util.Optional.of(producto));
+
+        OrdenRequest request = new OrdenRequest();
+        request.setClienteId(1L);
+
+        DetalleOrdenRequest detalle = new DetalleOrdenRequest();
+        detalle.setProductoId(1L);
+        detalle.setCantidad(2);
+
+        request.setDetalles(List.of(detalle));
+
+        IllegalStateException excepcion = assertThrows(
+                IllegalStateException.class,
+                () -> ordenService.crear(request)
+        );
+
+        assertEquals(
+                "No se pueden agregar productos inactivos a una orden",
+                excepcion.getMessage()
+        );
+
+        verify(ordenRepository, never()).save(any(Orden.class));
     }
 
 
