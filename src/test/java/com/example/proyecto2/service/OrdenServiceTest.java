@@ -109,6 +109,66 @@ class OrdenServiceTest {
 
 
     @Test
+    void debeCrearOrdenConVariosProductosYCalcularElTotal() {
+        Cliente cliente = new Cliente();
+        cliente.setId(1L);
+
+        Producto laptop = new Producto();
+        laptop.setId(1L);
+        laptop.setNombre("Laptop");
+        laptop.setPrecio(new BigDecimal("12500.00"));
+        laptop.setStock(10);
+
+        Producto tablet = new Producto();
+        tablet.setId(2L);
+        tablet.setNombre("Tablet");
+        tablet.setPrecio(new BigDecimal("2500.00"));
+        tablet.setStock(8);
+
+        when(clienteRepository.findById(1L))
+                .thenReturn(java.util.Optional.of(cliente));
+
+        when(productoRepository.findById(1L))
+                .thenReturn(java.util.Optional.of(laptop));
+
+        when(productoRepository.findById(2L))
+                .thenReturn(java.util.Optional.of(tablet));
+
+        when(ordenRepository.save(any(Orden.class)))
+                .thenAnswer(invocation -> {
+                    Orden orden = invocation.getArgument(0);
+                    orden.setId(1L);
+                    return orden;
+                });
+
+        OrdenRequest request = new OrdenRequest();
+        request.setClienteId(1L);
+
+        DetalleOrdenRequest detalleLaptop = new DetalleOrdenRequest();
+        detalleLaptop.setProductoId(1L);
+        detalleLaptop.setCantidad(3);
+
+        DetalleOrdenRequest detalleTablet = new DetalleOrdenRequest();
+        detalleTablet.setProductoId(2L);
+        detalleTablet.setCantidad(2);
+
+        request.setDetalles(List.of(detalleLaptop, detalleTablet));
+
+        var respuesta = ordenService.crear(request);
+
+        assertEquals(new BigDecimal("42500.00"), respuesta.getTotal());
+        assertEquals(2, respuesta.getDetalles().size());
+
+        assertEquals(10, laptop.getStock());
+        assertEquals(8, tablet.getStock());
+
+        verify(ordenRepository).save(any(Orden.class));
+        verify(productoRepository, never()).save(any(Producto.class));
+    }
+
+
+
+    @Test
     void debeCrearOrdenAunqueNoHayaStockSuficienteHastaConfirmarla() {
         Cliente cliente = new Cliente();
         cliente.setId(1L);
