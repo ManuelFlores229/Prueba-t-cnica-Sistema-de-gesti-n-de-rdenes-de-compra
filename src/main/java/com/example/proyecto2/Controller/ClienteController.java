@@ -13,7 +13,7 @@ import com.example.proyecto2.dto.orden.OrdenResponse;
 import com.example.proyecto2.service.OrdenService;
 
 @RestController
-@RequestMapping("/api/clientes")
+@RequestMapping("/api/v1/clientes")
 public class ClienteController {
 
     private final ClienteService clienteService;
@@ -61,7 +61,7 @@ public class ClienteController {
         return clienteService.actualizar(id, request);
     }
 
-    @PatchMapping("/{id}/desactivar")
+    @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void desactivar(@PathVariable Long id) {
         clienteService.desactivar(id);
