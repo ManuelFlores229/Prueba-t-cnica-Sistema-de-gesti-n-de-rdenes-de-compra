@@ -85,7 +85,7 @@ Desde Swagger UI se pueden consultar los endpoints disponibles y probar las oper
 
 ### Clientes
 
-Ruta base: `/api/clientes`
+Ruta base: `/api/v1/clientes`
 
 Permite registrar, consultar, listar, actualizar y desactivar clientes, buscar por nombre y consultar sus órdenes.
 

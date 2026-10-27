@@ -81,7 +81,7 @@ public class ProductoController {
         return productoService.actualizarStock(id, cantidad);
     }
 
-    @PatchMapping("/{id}/desactivar")
+    @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void desactivar(@PathVariable Long id) {
         productoService.desactivar(id);
