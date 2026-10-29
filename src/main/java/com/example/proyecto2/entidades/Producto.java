@@ -4,6 +4,8 @@ import com.example.proyecto2.entidades.Estados.EstadoRegistro;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(
@@ -43,6 +45,10 @@ public class Producto {
         @Enumerated(EnumType.STRING)
         @Column(nullable = false, length = 20)
         private EstadoRegistro estado = EstadoRegistro.ACTIVO;
+
+    @OneToMany
+            (mappedBy = "producto", fetch = FetchType.LAZY)
+        private List<DetalleOrden> detalles = new ArrayList<>();
 
         public Producto() {
         }
@@ -117,4 +123,6 @@ public class Producto {
         public void setEstado(EstadoRegistro estado) {
             this.estado = estado;
         }
+
+        public List<DetalleOrden> getDetalles() {return detalles;}
     }

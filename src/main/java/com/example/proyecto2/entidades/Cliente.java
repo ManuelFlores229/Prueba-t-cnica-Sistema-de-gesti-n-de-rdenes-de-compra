@@ -3,6 +3,8 @@ package com.example.proyecto2.entidades;
 import com.example.proyecto2.entidades.Estados.EstadoRegistro;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "clientes")
@@ -28,6 +30,9 @@ public class Cliente {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private EstadoRegistro estado = EstadoRegistro.ACTIVO;
+
+    @OneToMany(mappedBy = "cliente", fetch = FetchType.LAZY)
+    private List<Orden> ordenes = new ArrayList<>();
 
     @PrePersist
     void antesDeGuardar() {
@@ -83,5 +88,7 @@ public class Cliente {
     public void setEstado(EstadoRegistro estado) {
         this.estado = estado;
     }
+    
+    public List<Orden> getOrdenes() {return ordenes;}
 }
 
