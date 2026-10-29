@@ -4,6 +4,8 @@ import com.example.proyecto2.dto.cliente.ClienteRequest;
 import com.example.proyecto2.dto.cliente.ClienteResponse;
 import com.example.proyecto2.entidades.Cliente;
 import com.example.proyecto2.entidades.Estados.EstadoRegistro;
+import com.example.proyecto2.exception.ConflictoNegocioException;
+import com.example.proyecto2.exception.RecursoNoEncontradoException;
 import com.example.proyecto2.mapper.ClienteMapper;
 import com.example.proyecto2.repository.ClienteRepository;
 import org.springframework.data.domain.Page;
@@ -28,7 +30,7 @@ public class ClienteService {
     @Transactional
     public ClienteResponse crear(ClienteRequest request) {
         if (clienteRepository.existsByEmailIgnoreCase(request.getEmail())) {
-            throw new IllegalArgumentException(
+            throw new ConflictoNegocioException(
                     "Ya existe un cliente con ese correo electrónico"
             );
         }
@@ -70,7 +72,7 @@ public class ClienteService {
                         && !cliente.getEmail().equalsIgnoreCase(request.getEmail());
 
         if (emailUsadoPorOtroCliente) {
-            throw new IllegalArgumentException(
+            throw new ConflictoNegocioException(
                     "El correo electrónico ya pertenece a otro cliente"
             );
         }
@@ -94,7 +96,7 @@ public class ClienteService {
     private Cliente obtenerCliente(Long id) {
         return clienteRepository.findById(id)
                 .orElseThrow(() ->
-                        new IllegalArgumentException(
+                        new RecursoNoEncontradoException(
                                 "No existe un cliente con el ID " + id
                         )
                 );

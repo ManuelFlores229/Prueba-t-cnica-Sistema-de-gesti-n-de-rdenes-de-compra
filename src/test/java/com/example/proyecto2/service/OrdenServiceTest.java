@@ -2,6 +2,8 @@ package com.example.proyecto2.service;
 
 import com.example.proyecto2.entidades.DetalleOrden;
 import com.example.proyecto2.entidades.Estados.EstadoOrden;
+import com.example.proyecto2.exception.ConflictoNegocioException;
+import com.example.proyecto2.exception.RecursoNoEncontradoException;
 import com.example.proyecto2.repository.ClienteRepository;
 import com.example.proyecto2.repository.OrdenRepository;
 import com.example.proyecto2.repository.ProductoRepository;
@@ -257,8 +259,8 @@ class OrdenServiceTest {
         when(ordenRepository.findById(1L))
                 .thenReturn(java.util.Optional.of(orden));
 
-        IllegalStateException excepcion = assertThrows(
-                IllegalStateException.class,
+        ConflictoNegocioException excepcion = assertThrows(
+                ConflictoNegocioException.class,
                 () -> ordenService.cancelar(1L)
         );
 
@@ -372,8 +374,8 @@ class OrdenServiceTest {
         when(productoRepository.findById(1L))
                 .thenReturn(java.util.Optional.of(producto));
 
-        IllegalStateException excepcion = assertThrows(
-                IllegalStateException.class,
+        ConflictoNegocioException excepcion = assertThrows(
+                ConflictoNegocioException.class,
                 () -> ordenService.confirmar(1L)
         );
 
@@ -399,8 +401,8 @@ class OrdenServiceTest {
         when(ordenRepository.findById(1L))
                 .thenReturn(java.util.Optional.of(orden));
 
-        IllegalStateException excepcion = assertThrows(
-                IllegalStateException.class,
+        ConflictoNegocioException excepcion = assertThrows(
+                ConflictoNegocioException.class,
                 () -> ordenService.confirmar(1L)
         );
 
@@ -417,8 +419,8 @@ class OrdenServiceTest {
         when(ordenRepository.findById(999L))
                 .thenReturn(java.util.Optional.empty());
 
-        IllegalArgumentException excepcion = assertThrows(
-                IllegalArgumentException.class,
+        RecursoNoEncontradoException excepcion = assertThrows(
+                RecursoNoEncontradoException.class,
                 () -> ordenService.buscarPorId(999L)
         );
 
@@ -436,8 +438,8 @@ class OrdenServiceTest {
         when(clienteRepository.findById(999L))
                 .thenReturn(java.util.Optional.empty());
 
-        IllegalArgumentException excepcion = assertThrows(
-                IllegalArgumentException.class,
+        RecursoNoEncontradoException excepcion = assertThrows(
+                RecursoNoEncontradoException.class,
                 () -> ordenService.crear(request)
         );
 
@@ -470,8 +472,8 @@ class OrdenServiceTest {
         when(productoRepository.findById(999L))
                 .thenReturn(java.util.Optional.empty());
 
-        IllegalArgumentException excepcion = assertThrows(
-                IllegalArgumentException.class,
+        RecursoNoEncontradoException excepcion = assertThrows(
+                RecursoNoEncontradoException.class,
                 () -> ordenService.crear(request)
         );
 
@@ -604,8 +606,8 @@ class OrdenServiceTest {
         when(ordenRepository.findById(999L))
                 .thenReturn(java.util.Optional.empty());
 
-        IllegalArgumentException excepcion = assertThrows(
-                IllegalArgumentException.class,
+        RecursoNoEncontradoException excepcion = assertThrows(
+                RecursoNoEncontradoException.class,
                 () -> ordenService.confirmar(999L)
         );
 
@@ -632,8 +634,8 @@ class OrdenServiceTest {
         OrdenRequest request = new OrdenRequest();
         request.setClienteId(1L);
 
-        IllegalStateException excepcion = assertThrows(
-                IllegalStateException.class,
+        ConflictoNegocioException excepcion = assertThrows(
+                ConflictoNegocioException.class,
                 () -> ordenService.crear(request)
         );
 
@@ -674,8 +676,8 @@ class OrdenServiceTest {
 
         request.setDetalles(List.of(detalle));
 
-        IllegalStateException excepcion = assertThrows(
-                IllegalStateException.class,
+        ConflictoNegocioException excepcion = assertThrows(
+                ConflictoNegocioException.class,
                 () -> ordenService.crear(request)
         );
 

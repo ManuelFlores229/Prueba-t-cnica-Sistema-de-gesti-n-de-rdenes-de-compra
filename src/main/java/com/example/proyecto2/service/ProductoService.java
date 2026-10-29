@@ -4,6 +4,9 @@ import com.example.proyecto2.dto.producto.ProductoRequest;
 import com.example.proyecto2.dto.producto.ProductoResponse;
 import com.example.proyecto2.entidades.Estados.EstadoRegistro;
 import com.example.proyecto2.entidades.Producto;
+import com.example.proyecto2.exception.ConflictoNegocioException;
+import com.example.proyecto2.exception.RecursoNoEncontradoException;
+import com.example.proyecto2.exception.SolicitudInvalidaException;
 import com.example.proyecto2.mapper.ProductoMapper;
 import com.example.proyecto2.repository.ProductoRepository;
 import org.springframework.data.domain.Page;
@@ -36,7 +39,7 @@ public class ProductoService {
                         request.getNombre(),
                         request.getCategoria()
                 )) {
-            throw new IllegalArgumentException(
+            throw new ConflictoNegocioException(
                     "Ya existe un producto con ese nombre y categoría"
             );
         }
@@ -74,14 +77,14 @@ public class ProductoService {
             Pageable pageable
     ) {
         if (precioMinimo == null || precioMaximo == null) {
-            throw new IllegalArgumentException(
+            throw new SolicitudInvalidaException(
                     "El precio mínimo y máximo son obligatorios"
             );
         }
 
         if (precioMinimo.compareTo(BigDecimal.ZERO) < 0
                 || precioMaximo.compareTo(precioMinimo) < 0) {
-            throw new IllegalArgumentException(
+            throw new SolicitudInvalidaException(
                     "El rango de precios no es válido"
             );
         }
@@ -117,7 +120,7 @@ public class ProductoService {
                 );
 
         if (nombreCategoriaEnUso) {
-            throw new IllegalArgumentException(
+            throw new ConflictoNegocioException(
                     "Ya existe otro producto con ese nombre y categoría"
             );
         }
@@ -136,7 +139,7 @@ public class ProductoService {
     @Transactional
     public ProductoResponse actualizarStock(Long id, Integer nuevoStock) {
         if (nuevoStock == null || nuevoStock < 0) {
-            throw new IllegalArgumentException(
+            throw new SolicitudInvalidaException(
                     "El stock no puede ser negativo"
             );
         }
@@ -159,7 +162,7 @@ public class ProductoService {
     private Producto obtenerProducto(Long id) {
         return productoRepository.findById(id)
                 .orElseThrow(() ->
-                        new IllegalArgumentException(
+                        new RecursoNoEncontradoException(
                                 "No existe un producto con el ID " + id
                         )
                 );
@@ -168,13 +171,13 @@ public class ProductoService {
     private void validarProducto(ProductoRequest request) {
         if (request.getPrecio() == null
                 || request.getPrecio().compareTo(BigDecimal.ZERO) <= 0) {
-            throw new IllegalArgumentException(
+            throw new SolicitudInvalidaException(
                     "El precio debe ser mayor que cero"
             );
         }
 
         if (request.getStock() == null || request.getStock() < 0) {
-            throw new IllegalArgumentException(
+            throw new SolicitudInvalidaException(
                     "El stock no puede ser negativo"
             );
         }

@@ -1,67 +1,91 @@
-
 package com.example.proyecto2.exception;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ProblemDetail;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.context.request.WebRequest;
+import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
+
+import java.util.List;
 
 @RestControllerAdvice
-public class GlobalExceptionHandler {
+public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
-    @ExceptionHandler(IllegalArgumentException.class)
-    public ProblemDetail manejarArgumentoInvalido(
-            IllegalArgumentException ex) {
+    private static final Logger log =
+            LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
-        ProblemDetail problema = ProblemDetail.forStatusAndDetail(
-                HttpStatus.NOT_FOUND,
-                ex.getMessage()
-        );
-
-        problema.setTitle("Recurso no encontrado");
-
-        return problema;
+    @ExceptionHandler(RecursoNoEncontradoException.class)
+    public ProblemDetail manejarNoEncontrado(RecursoNoEncontradoException ex) {
+        return armarProblema(
+                HttpStatus.NOT_FOUND, "Recurso no encontrado", ex.getMessage());
     }
 
-    @ExceptionHandler(IllegalStateException.class)
-    public ProblemDetail manejarEstadoInvalido(
-            IllegalStateException ex) {
+    @ExceptionHandler(ConflictoNegocioException.class)
+    public ProblemDetail manejarConflicto(ConflictoNegocioException ex) {
+        return armarProblema(
+                HttpStatus.CONFLICT, "Operación no permitida", ex.getMessage());
+    }
 
-        ProblemDetail problema = ProblemDetail.forStatusAndDetail(
+    @ExceptionHandler(SolicitudInvalidaException.class)
+    public ProblemDetail manejarSolicitudInvalida(SolicitudInvalidaException ex) {
+        return armarProblema(
+                HttpStatus.BAD_REQUEST, "Solicitud inválida", ex.getMessage());
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ProblemDetail manejarIntegridad(DataIntegrityViolationException ex) {
+        log.warn("Violación de integridad: {}",
+                ex.getMostSpecificCause().getMessage());
+        return armarProblema(
                 HttpStatus.CONFLICT,
-                ex.getMessage()
-        );
-
-        problema.setTitle("Operación no permitida");
-
-        return problema;
+                "Operación no permitida",
+                "El dato entra en conflicto con uno ya registrado");
     }
 
+    @ExceptionHandler(Exception.class)
+    public ProblemDetail manejarInesperado(Exception ex) {
+        log.error("Error inesperado", ex);
+        return armarProblema(
+                HttpStatus.INTERNAL_SERVER_ERROR,
+                "Error interno",
+                "Ocurrió un error inesperado");
+    }
 
-    @ExceptionHandler(
-            org.springframework.web.bind.MethodArgumentNotValidException.class
-    )
-    public ProblemDetail manejarErroresValidacion(
-            org.springframework.web.bind.MethodArgumentNotValidException ex) {
+    @Override
+    protected ResponseEntity<Object> handleMethodArgumentNotValid(
+            MethodArgumentNotValidException ex,
+            HttpHeaders headers,
+            HttpStatusCode status,
+            WebRequest request) {
 
-        java.util.List<String> errores =
-                ex.getBindingResult()
-                        .getFieldErrors()
-                        .stream()
-                        .map(error -> error.getField()
-                                + ": " + error.getDefaultMessage())
-                        .distinct()
-                        .toList();
+        List<String> errores = ex.getBindingResult()
+                .getFieldErrors()
+                .stream()
+                .map(error -> error.getField() + ": " + error.getDefaultMessage())
+                .distinct()
+                .toList();
 
-        ProblemDetail problema = ProblemDetail.forStatusAndDetail(
+        ProblemDetail problema = armarProblema(
                 HttpStatus.BAD_REQUEST,
-                "La solicitud contiene datos inválidos"
-        );
-
-        problema.setTitle("Error de validación");
+                "Error de validación",
+                "La solicitud contiene datos inválidos");
         problema.setProperty("errores", errores);
 
-        return problema;
+        return ResponseEntity.badRequest().body(problema);
     }
 
+    private ProblemDetail armarProblema(
+            HttpStatus estado, String titulo, String detalle) {
+        ProblemDetail problema = ProblemDetail.forStatusAndDetail(estado, detalle);
+        problema.setTitle(titulo);
+        return problema;
+    }
 }
