@@ -1,6 +1,7 @@
 
 package com.example.proyecto2.Controller;
 
+import com.example.proyecto2.exception.RecursoNoEncontradoException;
 import com.example.proyecto2.service.OrdenService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,7 +32,7 @@ class OrdenControllerTest {
     @Test
     void debeResponder404CuandoLaOrdenNoExiste() throws Exception {
         when(ordenService.buscarPorId(999L))
-                .thenThrow(new IllegalArgumentException(
+                .thenThrow(new RecursoNoEncontradoException(
                         "No existe la orden con ID: 999"
                 ));
 

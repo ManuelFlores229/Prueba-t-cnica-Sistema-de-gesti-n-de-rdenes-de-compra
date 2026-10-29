@@ -6,6 +6,7 @@ import com.example.proyecto2.entidades.DetalleOrden;
 import com.example.proyecto2.entidades.Estados.EstadoOrden;
 import com.example.proyecto2.entidades.Orden;
 import com.example.proyecto2.entidades.Producto;
+import com.example.proyecto2.exception.ConflictoNegocioException;
 import com.example.proyecto2.repository.ClienteRepository;
 import com.example.proyecto2.repository.OrdenRepository;
 import com.example.proyecto2.repository.ProductoRepository;
@@ -92,7 +93,7 @@ class OrdenServiceIntegrationTest {
 
         // 5. Confirmar debe fallar por falta de stock de la tablet.
         assertThrows(
-                IllegalStateException.class,
+                ConflictoNegocioException.class,
                 () -> ordenService.confirmar(ordenId)
         );
 
