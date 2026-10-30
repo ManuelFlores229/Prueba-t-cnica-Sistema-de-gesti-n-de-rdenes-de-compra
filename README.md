@@ -39,8 +39,9 @@ Por seguridad, la contraseña se obtiene de una variable de entorno y no debe es
 Clona el repositorio y entra en la carpeta del proyecto:
 
 ```bash
-git clone URL_DEL_REPOSITORIO
-cd proyecto2
+git clone https://github.com/ManuelFlores229/Prueba-t-cnica-Sistema-de-gesti-n-de-rdenes-de-compra.git
+
+cd Prueba-t-cnica-Sistema-de-gesti-n-de-rdenes-de-compra
 ```
 
 Sustituye `URL_DEL_REPOSITORIO` por la dirección real de tu repositorio Git.
@@ -81,35 +82,96 @@ Especificación OpenAPI en JSON:
 
 Desde Swagger UI se pueden consultar los endpoints disponibles y probar las operaciones HTTP.
 
-## Principales recursos
+## Endpoints
 
-### Clientes
+Todos los endpoints usan el prefijo `/api/v1`. La lista completa con sus esquemas está en Swagger UI.
 
-Ruta base: `/api/v1/clientes`
+| Método | Ruta | Descripción |
+|---|---|---|
+| POST | `/clientes` | Registrar un cliente |
+| GET | `/clientes` | Listar clientes paginados |
+| GET | `/clientes/buscar?nombre=` | Buscar clientes por nombre |
+| GET | `/clientes/{id}` | Consultar un cliente |
+| PUT | `/clientes/{id}` | Actualizar un cliente |
+| DELETE | `/clientes/{id}` | Desactivar un cliente |
+| GET | `/clientes/{id}/ordenes` | Órdenes de un cliente |
+| POST | `/productos` | Registrar un producto |
+| GET | `/productos` | Listar productos con filtros |
+| GET | `/productos/{id}` | Consultar un producto |
+| PUT | `/productos/{id}` | Actualizar un producto |
+| PATCH | `/productos/{id}/stock` | Actualizar existencias |
+| DELETE | `/productos/{id}` | Desactivar un producto |
+| POST | `/ordenes` | Crear una orden |
+| GET | `/ordenes` | Listar órdenes paginadas |
+| GET | `/ordenes/{id}` | Consultar una orden |
+| GET | `/ordenes/estado?estado=` | Filtrar órdenes por estado |
+| GET | `/ordenes/fechas?fechaInicio=&fechaFin=` | Filtrar órdenes por rango de fechas |
+| PATCH | `/ordenes/{id}/confirmar` | Confirmar una orden |
+| PATCH | `/ordenes/{id}/cancelar` | Cancelar una orden |
 
-Permite registrar, consultar, listar, actualizar y desactivar clientes, buscar por nombre y consultar sus órdenes.
+### Filtros de productos
 
-### Productos
+`GET /api/v1/productos` acepta estos parámetros opcionales y se pueden combinar:
 
-Ruta base: `/api/v1/productos`
+| Parámetro | Efecto |
+|---|---|
+| `nombre` | Productos cuyo nombre contiene el texto, sin distinguir mayúsculas |
+| `categoria` | Productos de esa categoría |
+| `conStock` | Con `true`, solo productos con existencias |
+| `precioMin`, `precioMax` | Rango de precios |
+| `estado` | `ACTIVO` o `INACTIVO`. Si se omite, solo se muestran los activos |
 
-Permite registrar, consultar, listar, actualizar y desactivar productos, buscar por nombre, consultar por rango de precios y gestionar el inventario.
+## Pruebas automatizadas
 
-### Órdenes de compra
+Las pruebas de integración usan la misma base de datos PostgreSQL de la aplicación, así que antes de ejecutarlas hay que tener PostgreSQL iniciado, la base `Gestion_de_pedidos` creada y la variable `DB_PASSWORD` configurada. Los datos que crean se deshacen al terminar cada prueba.
 
-Ruta base: `/api/v1/ordenes`
+Para ejecutar todas las pruebas desde la raíz del proyecto:
 
-Permite crear órdenes con varios productos, consultar órdenes, filtrar por estado o rango de fechas, confirmar órdenes y cancelarlas.
+```bash
+./mvnw test
+```
 
-## Reglas de negocio
+En Windows PowerShell:
 
-- Los totales de las órdenes se calculan en el backend.
-- Las órdenes pueden contener varios productos.
-- No se permite crear órdenes con clientes o productos inactivos.
-- La confirmación valida la disponibilidad de inventario y descuenta las existencias.
-- La cancelación de una orden confirmada restaura las existencias correspondientes.
-- Las operaciones de negocio que requieren consistencia se gestionan mediante transacciones.
-- Se conserva el precio unitario registrado en el detalle de la orden.
+```powershell
+.\mvnw.cmd test
+```
+
+Tipos de pruebas:
+
+| Tipo | Clases | Qué verifican |
+|---|---|---|
+| Unitarias (Mockito) | `OrdenServiceTest`, `ClienteServiceTest`, `ProductoServiceTest` | Reglas de negocio, cálculo de totales y validaciones, sin base de datos |
+| Controladores (`@WebMvcTest`) | `ClienteControllerTest`, `OrdenControllerTest`, `ProductoControllerTest` | Códigos HTTP y validación de los datos de entrada |
+| Integración | `OrdenServiceIntegrationTest`, `ApiIntegracionTest` | Peticiones HTTP completas contra la base real, inventario y rollback |
+
+Para ejecutar solo una clase:
+
+```bash
+./mvnw -Dtest=ApiIntegracionTest test
+```
+
+## Autor
+
+Manuel Flores. Prueba técnica de desarrollo de una API REST para la gestión de órdenes de compra.
+
+Resultado de la última ejecución: NN pruebas, 0 fallos.
+
+## Estructura del código
+
+El código fuente está en `src/main/java/com/example/proyecto2`:
+
+| Paquete | Contenido |
+|---|---|
+| `Controller` | Endpoints REST |
+| `service` | Reglas de negocio y transacciones |
+| `repository` | Acceso a datos con Spring Data JPA |
+| `entidades` | Entidades JPA y enums de estado |
+| `dto` | Objetos de entrada y salida de la API |
+| `mapper` | Conversión entre entidades y DTOs |
+| `exception` | Excepciones propias y manejador global de errores |
+
+Las pruebas están en `src/test/java`.
 
 ## Migraciones de base de datos
 
