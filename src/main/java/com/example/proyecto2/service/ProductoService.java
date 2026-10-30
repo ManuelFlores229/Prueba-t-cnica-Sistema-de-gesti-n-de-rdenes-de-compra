@@ -1,5 +1,6 @@
 package com.example.proyecto2.service;
 
+import com.example.proyecto2.dto.producto.ProductoFiltro;
 import com.example.proyecto2.dto.producto.ProductoRequest;
 import com.example.proyecto2.dto.producto.ProductoResponse;
 import com.example.proyecto2.entidades.Estados.EstadoRegistro;
@@ -9,12 +10,16 @@ import com.example.proyecto2.exception.RecursoNoEncontradoException;
 import com.example.proyecto2.exception.SolicitudInvalidaException;
 import com.example.proyecto2.mapper.ProductoMapper;
 import com.example.proyecto2.repository.ProductoRepository;
+import com.example.proyecto2.repository.ProductoSpecs;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.Optional;
+import java.util.stream.Stream;
 
 @Service
 public class ProductoService {
@@ -56,44 +61,14 @@ public class ProductoService {
     }
 
     @Transactional(readOnly = true)
-    public Page<ProductoResponse> listar(Pageable pageable) {
-        return productoRepository.findAll(pageable)
-                .map(productoMapper::toResponse);
-    }
-
-    @Transactional(readOnly = true)
-    public Page<ProductoResponse> buscarPorNombre(
-            String nombre,
+    public Page<ProductoResponse> listar(
+            ProductoFiltro filtro,
             Pageable pageable
     ) {
+        validarRangoPrecios(filtro.getPrecioMin(), filtro.getPrecioMax());
+
         return productoRepository
-                .findByNombreContainingIgnoreCase(nombre, pageable)
-                .map(productoMapper::toResponse);
-    }
-    @Transactional(readOnly = true)
-    public Page<ProductoResponse> buscarPorRangoPrecio(
-            BigDecimal precioMinimo,
-            BigDecimal precioMaximo,
-            Pageable pageable
-    ) {
-        if (precioMinimo == null || precioMaximo == null) {
-            throw new SolicitudInvalidaException(
-                    "El precio mínimo y máximo son obligatorios"
-            );
-        }
-
-        if (precioMinimo.compareTo(BigDecimal.ZERO) < 0
-                || precioMaximo.compareTo(precioMinimo) < 0) {
-            throw new SolicitudInvalidaException(
-                    "El rango de precios no es válido"
-            );
-        }
-
-        return productoRepository.findByPrecioBetween(
-                        precioMinimo,
-                        precioMaximo,
-                        pageable
-                )
+                .findAll(construirFiltros(filtro), pageable)
                 .map(productoMapper::toResponse);
     }
 
@@ -179,6 +154,44 @@ public class ProductoService {
         if (request.getStock() == null || request.getStock() < 0) {
             throw new SolicitudInvalidaException(
                     "El stock no puede ser negativo"
+            );
+        }
+    }
+    private Specification<Producto> construirFiltros(ProductoFiltro filtro) {
+        EstadoRegistro estado = Optional.ofNullable(filtro.getEstado())
+                .orElse(EstadoRegistro.ACTIVO);
+
+        return Stream.of(
+                        Optional.ofNullable(filtro.getNombre())
+                                .filter(texto -> !texto.isBlank())
+                                .map(ProductoSpecs::nombreContiene),
+                        Optional.ofNullable(filtro.getCategoria())
+                                .filter(texto -> !texto.isBlank())
+                                .map(ProductoSpecs::conCategoria),
+                        Optional.ofNullable(filtro.getPrecioMin())
+                                .map(ProductoSpecs::precioDesde),
+                        Optional.ofNullable(filtro.getPrecioMax())
+                                .map(ProductoSpecs::precioHasta),
+                        Optional.ofNullable(filtro.getConStock())
+                                .filter(Boolean::booleanValue)
+                                .map(pedido -> ProductoSpecs.conStock()),
+                        Optional.of(ProductoSpecs.conEstado(estado))
+                )
+                .flatMap(Optional::stream)
+                .reduce(Specification::and)
+                .orElseThrow();
+    }
+
+    private void validarRangoPrecios(BigDecimal minimo, BigDecimal maximo) {
+        if (minimo != null && minimo.compareTo(BigDecimal.ZERO) < 0) {
+            throw new SolicitudInvalidaException(
+                    "El precio mínimo no puede ser negativo"
+            );
+        }
+
+        if (minimo != null && maximo != null && minimo.compareTo(maximo) > 0) {
+            throw new SolicitudInvalidaException(
+                    "El rango de precios no es válido"
             );
         }
     }

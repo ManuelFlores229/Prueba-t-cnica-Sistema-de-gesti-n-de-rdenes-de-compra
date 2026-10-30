@@ -9,7 +9,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
-import java.math.BigDecimal;
+import com.example.proyecto2.dto.producto.ProductoFiltro;
+import org.springdoc.core.annotations.ParameterObject;
 
 @RestController
 @RequestMapping("/api/v1/productos")
@@ -36,33 +37,12 @@ public class ProductoController {
 
     @GetMapping
     public Page<ProductoResponse> listar(
+            @ParameterObject ProductoFiltro filtro,
+            @ParameterObject
             @PageableDefault(size = 10, sort = "nombre")
             Pageable pageable
     ) {
-        return productoService.listar(pageable);
-    }
-
-    @GetMapping("/buscar")
-    public Page<ProductoResponse> buscarPorNombre(
-            @RequestParam String nombre,
-            @PageableDefault(size = 10, sort = "nombre")
-            Pageable pageable
-    ) {
-        return productoService.buscarPorNombre(nombre, pageable);
-    }
-
-    @GetMapping("/precio")
-    public Page<ProductoResponse> buscarPorRangoPrecio(
-            @RequestParam BigDecimal precioMinimo,
-            @RequestParam BigDecimal precioMaximo,
-            @PageableDefault(size = 10, sort = "precio")
-            Pageable pageable
-    ) {
-        return productoService.buscarPorRangoPrecio(
-                precioMinimo,
-                precioMaximo,
-                pageable
-        );
+        return productoService.listar(filtro, pageable);
     }
 
     @PutMapping("/{id}")

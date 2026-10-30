@@ -4,6 +4,7 @@ import com.example.proyecto2.dto.cliente.ClienteRequest;
 import com.example.proyecto2.dto.cliente.ClienteResponse;
 import com.example.proyecto2.service.ClienteService;
 import jakarta.validation.Valid;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
@@ -40,6 +41,7 @@ public class ClienteController {
 
     @GetMapping
     public Page<ClienteResponse> listar(
+            @ParameterObject
             @PageableDefault(size = 10, sort = "nombre") Pageable pageable
     ) {
         return clienteService.listar(pageable);
@@ -48,6 +50,7 @@ public class ClienteController {
     @GetMapping("/buscar")
     public Page<ClienteResponse> buscarPorNombre(
             @RequestParam String nombre,
+            @ParameterObject
             @PageableDefault(size = 10, sort = "nombre") Pageable pageable
     ) {
         return clienteService.buscarPorNombre(nombre, pageable);
@@ -67,14 +70,13 @@ public class ClienteController {
         clienteService.desactivar(id);
     }
 
-
     @GetMapping("/{id}/ordenes")
     public Page<OrdenResponse> listarOrdenesPorCliente(
             @PathVariable Long id,
+            @ParameterObject
             @PageableDefault(size = 10, sort = "fechaCreacion")
             Pageable pageable
     ) {
         return ordenService.listarPorCliente(id, pageable);
     }
-
 }

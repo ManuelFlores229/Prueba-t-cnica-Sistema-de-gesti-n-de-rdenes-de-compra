@@ -1,8 +1,13 @@
 package com.example.proyecto2.entidades;
 
 import com.example.proyecto2.entidades.Estados.EstadoRegistro;
+import com.example.proyecto2.dto.producto.ProductoFiltro;
+import com.example.proyecto2.repository.ProductoSpecs;
+import org.springframework.data.jpa.domain.Specification;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
+import java.util.Optional;
+import java.util.stream.Stream;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
