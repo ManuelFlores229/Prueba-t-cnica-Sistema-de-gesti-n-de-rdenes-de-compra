@@ -25,9 +25,13 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 @Service
 public class OrdenService {
+    private static final Set<String> CAMPOS_ORDENABLES = Set.of(
+            "id", "total", "estado", "fechaCreacion"
+    );
 
     private final OrdenRepository ordenRepository;
     private final ClienteRepository clienteRepository;
@@ -45,6 +49,8 @@ public class OrdenService {
 
     @Transactional(readOnly = true)
     public Page<OrdenResponse> listar(Pageable pageable) {
+        Ordenamiento.validar(pageable, CAMPOS_ORDENABLES);
+
         return ordenRepository.findAll(pageable)
                 .map(this::convertirRespuesta);
     }
@@ -54,6 +60,8 @@ public class OrdenService {
             EstadoOrden estado,
             Pageable pageable
     ) {
+        Ordenamiento.validar(pageable, CAMPOS_ORDENABLES);
+
         return ordenRepository.findByEstado(estado, pageable)
                 .map(this::convertirRespuesta);
     }
@@ -64,6 +72,8 @@ public class OrdenService {
             LocalDateTime fechaFin,
             Pageable pageable
     ) {
+        Ordenamiento.validar(pageable, CAMPOS_ORDENABLES);
+
         if (fechaInicio.isAfter(fechaFin)) {
             throw new SolicitudInvalidaException(
                     "La fecha de inicio no puede ser posterior a la fecha final"
@@ -77,9 +87,12 @@ public class OrdenService {
 
     @Transactional(readOnly = true)
     public Page<OrdenResponse> listarPorCliente(Long clienteId, Pageable pageable) {
+        Ordenamiento.validar(pageable, CAMPOS_ORDENABLES);
+
         return ordenRepository.findByClienteId(clienteId, pageable)
                 .map(this::convertirRespuesta);
     }
+
 
     @Transactional(readOnly = true)
     public OrdenResponse buscarPorId(Long id) {

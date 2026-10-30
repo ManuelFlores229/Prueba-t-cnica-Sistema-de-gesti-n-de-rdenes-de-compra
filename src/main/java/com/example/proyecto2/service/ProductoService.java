@@ -20,9 +20,13 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.util.Optional;
 import java.util.stream.Stream;
+import java.util.Set;
 
 @Service
 public class ProductoService {
+    private static final Set<String> CAMPOS_ORDENABLES = Set.of(
+            "id", "nombre", "categoria", "precio", "stock", "fechaCreacion", "estado"
+    );
 
     private final ProductoRepository productoRepository;
     private final ProductoMapper productoMapper;
@@ -65,6 +69,7 @@ public class ProductoService {
             ProductoFiltro filtro,
             Pageable pageable
     ) {
+        Ordenamiento.validar(pageable, CAMPOS_ORDENABLES);
         validarRangoPrecios(filtro.getPrecioMin(), filtro.getPrecioMax());
 
         return productoRepository

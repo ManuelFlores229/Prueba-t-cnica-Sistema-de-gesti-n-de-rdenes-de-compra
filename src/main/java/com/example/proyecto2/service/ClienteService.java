@@ -13,8 +13,13 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Set;
+
 @Service
 public class ClienteService {
+    private static final Set<String> CAMPOS_ORDENABLES = Set.of(
+            "id", "nombre", "email", "telefono", "fechaRegistro", "estado"
+    );
 
     private final ClienteRepository clienteRepository;
     private final ClienteMapper clienteMapper;
@@ -49,6 +54,8 @@ public class ClienteService {
 
     @Transactional(readOnly = true)
     public Page<ClienteResponse> listar(Pageable pageable) {
+        Ordenamiento.validar(pageable, CAMPOS_ORDENABLES);
+
         return clienteRepository.findAll(pageable)
                 .map(clienteMapper::toResponse);
     }
@@ -58,6 +65,8 @@ public class ClienteService {
             String nombre,
             Pageable pageable
     ) {
+        Ordenamiento.validar(pageable, CAMPOS_ORDENABLES);
+
         return clienteRepository
                 .findByNombreContainingIgnoreCase(nombre, pageable)
                 .map(clienteMapper::toResponse);
